@@ -1,21 +1,3 @@
-"""
-cnn_lstm_multi_test.py
-CNN-LSTM Physics-Informed v3 — Multi-Dataset Test Pipeline (FD001–FD004)
-
-Auto-detects which datasets have all required files:
-    test_FDxxx.txt + RUL_FDxxx.txt + cnn_lstm_brain_FDxxx.pt + preprocessors_FDxxx.pkl
-
-Evaluates each found dataset using its own dedicated brain.
-Prints a comparison table AND degradation velocity analysis per dataset.
-
-FIXES APPLIED:
-  FIX-P1: .count() replaced with .max() for engine cycle selection (semantic accuracy)
-  FIX-P2: Guard added for empty df_res before division — prevents ZeroDivisionError
-           in the impossible-but-defensive case where engine IDs don't match RUL file
-  FIX-P3: physics_scaler.transform guarded against None (consistent with FIX-T2
-           in training file where physics_scaler is now saved as None when unused)
-"""
-
 import os
 import warnings
 import joblib

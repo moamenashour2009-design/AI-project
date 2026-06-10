@@ -1,17 +1,3 @@
-"""
-cnn_lstm_multi_train.py
-CNN-LSTM Physics-Informed v3 — Multi-Dataset Training (FD001–FD004)
-
-Trains independently on each available dataset.
-Each dataset gets its own brain + preprocessors file.
-Skips datasets whose train file is not found.
-
-FIXES APPLIED:
-  FIX-T1: detect_dead_sensors() now called on train split only (no leakage)
-  FIX-T2: physics_scaler saved as None when physics_features=[] (no unfitted scaler in pkl)
-  FIX-GLOBAL-SHAP: Fleet-level global SHAP restored inside dataset loop (was missing)
-"""
-
 import os
 import warnings
 import joblib
@@ -851,4 +837,3 @@ print(f'    cnn_lstm_loss_FDxxx.png              ← training loss curve')
 print(f'    deg_velocity_val_FDxxx.png           ← val engine health trajectory')
 print(f'    cnn_lstm_shap_engine_FDxxx.png       ← engine-level SHAP')
 print(f'    cnn_lstm_shap_fleet_FDxxx.png        ← fleet-level global SHAP')
-print(f'\n  Run cnn_lstm_multi_test.py to evaluate on official test sets.')

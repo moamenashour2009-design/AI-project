@@ -1,21 +1,3 @@
-"""
-cnn_lstm_multi_test.py
-CNN-LSTM Physics-Informed v3 — Multi-Dataset Test Pipeline (FD001–FD004)
-
-Auto-detects which datasets have all required files:
-    test_FDxxx.txt + RUL_FDxxx.txt + cnn_lstm_brain_FDxxx.pt + preprocessors_FDxxx.pkl
-
-Evaluates each found dataset using its own dedicated brain.
-Prints a comparison table AND degradation velocity analysis per dataset.
-
-FIXES APPLIED:
-  FIX-P1: .count() replaced with .max() for engine cycle selection (semantic accuracy)
-  FIX-P2: Guard added for empty df_res before division — prevents ZeroDivisionError
-           in the impossible-but-defensive case where engine IDs don't match RUL file
-  FIX-P3: physics_scaler.transform guarded against None (consistent with FIX-T2
-           in training file where physics_scaler is now saved as None when unused)
-"""
-
 import os
 import warnings
 import joblib
@@ -33,8 +15,8 @@ torch.manual_seed(42)
 # ====================================================================
 # ABLATION FLAGS — must match training flags for this variant
 # ====================================================================
-USE_DELTA_FEATURES   = True
-USE_PHYSICS_FEATURES = True
+USE_DELTA_FEATURES   = False
+USE_PHYSICS_FEATURES = False
 USE_ATTENTION        = False
 USE_PENALTY_LOSS     = False
 # ====================================================================
@@ -91,7 +73,10 @@ class CNNLSTMSequential(nn.Module):
         h0      = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
         c0      = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
         out, _  = self.lstm(c, (h0, c0))
-        ctx, _  = self.attn(out)
+        if USE_ATTENTION:
+            ctx, _ = self.attn(out)
+        else:
+            ctx = out[:, -1, :]
         return self.head(ctx)
 
 
@@ -280,24 +265,25 @@ for dataset_id in available:
     # Delta features from each test engine's own first 20 cycles
     # (NOT from train baselines — using train baselines caused NASA score
     # to explode to 19000+ in earlier versions of this pipeline)
-    test_baseline = (
-        test_data[test_data['cycle'] <= 20]
-        .groupby(['engine_id', 'flight_regime'])[active_sensors]
-        .mean()
-        .reset_index()
-    )
-    test_baseline.columns = (
-        ['engine_id', 'flight_regime'] + [f'{s}_base' for s in active_sensors]
-    )
-    test_data = test_data.merge(
-        test_baseline, on=['engine_id', 'flight_regime'], how='left'
-    )
-    for s in active_sensors:
-        test_data[f'{s}_base'] = test_data[f'{s}_base'].fillna(
-            test_data['flight_regime'].map(global_regime_mean[s])
+    if USE_DELTA_FEATURES:
+        test_baseline = (
+            test_data[test_data['cycle'] <= 20]
+            .groupby(['engine_id', 'flight_regime'])[active_sensors]
+            .mean()
+            .reset_index()
         )
-        test_data[f'delta_{s}'] = test_data[s] - test_data[f'{s}_base']
-        test_data.drop(columns=[f'{s}_base'], inplace=True)
+        test_baseline.columns = (
+            ['engine_id', 'flight_regime'] + [f'{s}_base' for s in active_sensors]
+        )
+        test_data = test_data.merge(
+            test_baseline, on=['engine_id', 'flight_regime'], how='left'
+        )
+        for s in active_sensors:
+            test_data[f'{s}_base'] = test_data[f'{s}_base'].fillna(
+                test_data['flight_regime'].map(global_regime_mean[s])
+            )
+            test_data[f'delta_{s}'] = test_data[s] - test_data[f'{s}_base']
+            test_data.drop(columns=[f'{s}_base'], inplace=True)
 
     # Physics features — only those in expected_features from training
     if physics_features:
@@ -322,7 +308,8 @@ for dataset_id in available:
             test_data[physics_features]
         )
 
-    test_data[delta_features] = delta_scaler.transform(test_data[delta_features])
+    if delta_features and delta_scaler is not None:
+        test_data[delta_features] = delta_scaler.transform(test_data[delta_features])
     print(f'  ✅ Preprocessing complete — features ready')
 
     # ── STEP 4: Predict RUL ──────────────────────────────────────────

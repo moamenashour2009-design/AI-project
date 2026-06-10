@@ -1,17 +1,3 @@
-"""
-cnn_lstm_multi_train.py
-CNN-LSTM Physics-Informed v3 — Multi-Dataset Training (FD001–FD004)
-
-Trains independently on each available dataset.
-Each dataset gets its own brain + preprocessors file.
-Skips datasets whose train file is not found.
-
-FIXES APPLIED:
-  FIX-T1: detect_dead_sensors() now called on train split only (no leakage)
-  FIX-T2: physics_scaler saved as None when physics_features=[] (no unfitted scaler in pkl)
-  FIX-GLOBAL-SHAP: Fleet-level global SHAP restored inside dataset loop (was missing)
-"""
-
 import os
 import warnings
 import joblib
@@ -44,8 +30,8 @@ BATCH_SIZE      = 64
 # ====================================================================
 # ABLATION FLAGS — set True/False per experiment
 # ====================================================================
-USE_DELTA_FEATURES   = True
-USE_PHYSICS_FEATURES = True
+USE_DELTA_FEATURES   = False
+USE_PHYSICS_FEATURES = False
 USE_ATTENTION        = False
 USE_PENALTY_LOSS     = False
 # ====================================================================
@@ -529,10 +515,14 @@ for dataset_id, config in DATASET_CONFIGS.items():
     global_regime_mean = train_matrix.groupby(
         'flight_regime'
     )[active_sensors].mean()
-    train_matrix, val_matrix, delta_features, regime_baseline = \
-        compute_delta_features(
-            train_matrix, val_matrix, active_sensors, global_regime_mean
-        )
+    if USE_DELTA_FEATURES:
+        train_matrix, val_matrix, delta_features, regime_baseline = \
+            compute_delta_features(
+                train_matrix, val_matrix, active_sensors, global_regime_mean
+            )
+    else:
+        delta_features  = []
+        regime_baseline = None
     print(f'  ✅ {len(delta_features)} delta features')
 
     # ── PHASE 4: Physics features ────────────────────────────────────
@@ -847,4 +837,3 @@ print(f'    cnn_lstm_loss_FDxxx.png              ← training loss curve')
 print(f'    deg_velocity_val_FDxxx.png           ← val engine health trajectory')
 print(f'    cnn_lstm_shap_engine_FDxxx.png       ← engine-level SHAP')
 print(f'    cnn_lstm_shap_fleet_FDxxx.png        ← fleet-level global SHAP')
-print(f'\n  Run cnn_lstm_multi_test.py to evaluate on official test sets.')

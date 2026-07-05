@@ -577,6 +577,8 @@ for dataset_id in available:
         ax.legend()
         fig.tight_layout()
         fig.savefig(f'deg_velocity_{dataset_id}.png', dpi=300)
+        fig.savefig(f'deg_velocity_{dataset_id}_engine_{best_engine}.png', 
+            dpi=300, bbox_inches='tight')
         plt.close(fig)
         print(f'  ✅ Degradation chart → deg_velocity_{dataset_id}.png')
 
@@ -614,3 +616,4 @@ print(f'    test_eval_FDxxx.png           ← predicted vs true + error histogra
 print(f'    test_shap_all_FDxxx.png       ← all-feature SHAP bar chart')
 print(f'    test_shap_top5_FDxxx.png      ← top 5 sensor SHAP chart')
 print(f'    deg_velocity_FDxxx.png        ← degradation velocity trajectory')
+

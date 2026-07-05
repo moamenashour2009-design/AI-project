@@ -15,8 +15,8 @@ torch.manual_seed(42)
 # ====================================================================
 # ABLATION FLAGS — must match training flags for this variant
 # ====================================================================
-USE_DELTA_FEATURES   = False
-USE_PHYSICS_FEATURES = True
+USE_DELTA_FEATURES   = True
+USE_PHYSICS_FEATURES = False
 USE_ATTENTION        = False
 USE_PENALTY_LOSS     = False
 # ====================================================================
@@ -73,7 +73,10 @@ class CNNLSTMSequential(nn.Module):
         h0      = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
         c0      = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
         out, _  = self.lstm(c, (h0, c0))
-        ctx, _  = self.attn(out)
+        if USE_ATTENTION:
+            ctx, _ = self.attn(out)
+        else:
+            ctx = out[:, -1, :]   # last hidden state — no attention
         return self.head(ctx)
 
 

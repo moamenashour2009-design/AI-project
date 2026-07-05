@@ -73,7 +73,10 @@ class CNNLSTMSequential(nn.Module):
         h0      = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
         c0      = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
         out, _  = self.lstm(c, (h0, c0))
-        ctx, _  = self.attn(out)
+        if USE_ATTENTION:
+            ctx, _ = self.attn(out)
+        else:
+            ctx = out[:, -1, :]   # last hidden state — no attention
         return self.head(ctx)
 
 

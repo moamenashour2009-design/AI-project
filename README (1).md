@@ -276,12 +276,6 @@ If you use this code in your research, please cite:
 
 ---
 
-## 📄 License
-
-MIT License — see `LICENSE` file in this repository for full text.
-
----
-
 <div align="center">
   <sub>Built with safety in mind. Because the cost of overestimating remaining life is not a number on a leaderboard.</sub>
 </div>

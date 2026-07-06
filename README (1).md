@@ -163,7 +163,7 @@ pip install torch numpy pandas scikit-learn matplotlib shap joblib
 
 ### 2. Download the CMAPSS Dataset
 
-Download from the [NASA Prognostics Data Repository](https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6):
+Download from the [NASA Prognostics Data Repository](https://data.nasa.gov/dataset/cmapss-jet-engine-simulated-data):
 
 Place the following files in the project root (these are **not included** in this repository):
 ```
